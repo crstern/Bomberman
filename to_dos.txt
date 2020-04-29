@@ -1,0 +1,3 @@
+    1 algoritmul alpha beta adaptare DONE
+2 posibilitatea de a alege un algoritm
+3 posibilitatea de a alege jucatorul *
