@@ -79,10 +79,11 @@ def draw_game(display, config):
                 display.blit(protection_img, (col * w_gr, row * h_gr))
             elif config.table[row][col] == 'a':
                 display.blit(explosion_img, (col * w_gr, row * h_gr))
-    display.blit(text, (0,0))
+    display.blit(text, (0, 0))
 
     pygame.display.flip()
     return drt
+
 
 """ Algoritmul MinMax ! """
 
@@ -106,8 +107,6 @@ def min_max(state):
     # We apply minMax algorith for all the possible moves,
     score_moves = [min_max(move) for move in state.possible_moves]
 
-    # print(len(score_moves))
-
     if len(score_moves) == 0:
         print("ii bai")
         return state.parent
@@ -120,7 +119,6 @@ def min_max(state):
         state.chosen_state = min(score_moves, key=lambda x: x.score)
 
     state.score = state.chosen_state.score
-    # print(str(state.chosen_state.depth) + " " + str(state.chosen_state.score) + "\n" + str(state.chosen_state.board))
 
     return state
 
@@ -178,16 +176,15 @@ def print_if_final(current_state):
     final = current_state.board.game_over()
     if final:
         if final == "remiza":
-            print("Remiza!")
+            print("Draw!")
         else:
-            print("A castigat " + final)
+            print("Player " + final + " won!")
         return True
     return False
 
 
 def main():
     # initialing
-    global algorithm_type
     valid_answer = False
     while not valid_answer:
         algorithm_type = input("Enter the algorithm type (Answer with 1 or 2)\n 1.MiniMax\n 2.Alpha-Beta\n")
@@ -251,7 +248,6 @@ def main():
                         bomb = 'y'
                         continue
                     if event.key == K_w:
-                        print("w")
                         increment_location = (-1, 0)
                     elif event.key == K_s:
                         increment_location = (1, 0)
@@ -262,16 +258,13 @@ def main():
                     if increment_location:
                         new_position = add_positions(current_state.current_player.position, increment_location)
                         if current_state.board.table[new_position[0]][new_position[1]] in [' ', 'p']:
-                            print(bomb)
                             if bomb == 'y':
-                                print("bomb e y")
                                 current_state.board, current_state.current_player = \
                                     current_state.board.player_attacks(current_state.current_player.player_name,
                                                                        new_position[0],
                                                                        new_position[1])
                                 bomb = 'n'
                             else:
-                                print("bomb e n")
                                 current_state.board, current_state.current_player = \
                                     current_state.board.player_moves(current_state.current_player.player_name,
                                                                      new_position[0],
@@ -282,64 +275,13 @@ def main():
                                 break
 
                             t_after = int(round(time.time() * 1000))
-                            print("Jucatorul a \"gandit\" timp de " + str(t_after - t_before) + " milisecunde.")
+                            print("The player taught for " + str(t_after - t_before) + " miliseconds.")
                             current_state.depth = 3
                             current_state.current_player = current_state.opposite_player()
-
-
-
-            """Without pygame"""
-            #
-            # print("                 Protections: " + str(current_state.current_player.number_of_protections) + "\n" +
-            #       "Current board:   Oponent Protections:" + str(current_state.opposite_player().number_of_protections))
-            # print(str(current_state.board))
-            # valid_answer = False
-            # bomb = None
-            # new_position = None
-            # while not valid_answer:
-            #     print("If you want to exit, enter 'q'")
-            #     bomb = input("bomb (y/n): ").lower()
-            #
-            #     if bomb not in ['y', 'n']:
-            #         if bomb == 'q':
-            #             return 0
-            #         print("Answer must be y or n!")
-            #         continue
-            #     direction = input("direction: ").lower()
-            #
-            #     if direction == 'w':
-            #         increment_location = (-1, 0)
-            #     elif direction == "s":
-            #         increment_location = (1, 0)
-            #     elif direction == "a":
-            #         increment_location = (0, -1)
-            #     elif direction == "d":
-            #         increment_location = (0, 1)
-            #     else:
-            #         print("Answer must be w, a, s or d!")
-            #         continue
-            #
-            #     new_position = add_positions(current_state.current_player.position, increment_location)
-            #     if current_state.board.table[new_position[0]][new_position[1]] in [' ', 'p']:
-            #         valid_answer = True
-            #     else:
-            #         print("Can't go there!" + str(current_state.board.table[new_position[0]][new_position[1]]))
-            #
-            # if bomb == 'y':
-            #     current_state.board, current_state.current_player = \
-            #         current_state.board.player_attacks(current_state.current_player.player_name, new_position[0],
-            #                                            new_position[1])
-            # else:
-            #     current_state.board, current_state.current_player = \
-            #         current_state.board.player_moves(current_state.current_player.player_name, new_position[0],
-            #                                          new_position[1])
-            #
-
-
         else:
             # JMAX moves
             t_before = int(round(time.time() * 1000))
-            if algorithm_type == 1:
+            if algorithm_type == '1':
                 updated_state = min_max(current_state)
             else:
                 updated_state = alpha_beta(-5000, 5000, current_state)
@@ -347,13 +289,72 @@ def main():
             draw_game(screen, current_state.board)
 
             t_after = int(round(time.time() * 1000))
-            print("Calculatorul a \"gandit\" timp de " + str(t_after - t_before) + " milisecunde.")
-            print("Scor " + str(current_state.score))
+            print("The AI taught " + str(t_after - t_before) + " miliseconds.")
+            # print("Scor " + str(current_state.score))
             # current_state.current_player = updated_state.chosen_state.current_player
             # current_state.current_player = updated_state.chosen_state.current_player
-            # current_state.depth = 3
+            current_state.depth = 3
             current_state.current_player = current_state.opposite_player()
 
+    """Without pygame"""
+
+    # while True:
+    #     t_before = int(round(time.time() * 1000))
+    #     for bomb_activated in current_state.board.bombs:
+    #         if bomb_activated.activated:
+    #             if not current_state.board.is_player_safe(Game.PMAX, bomb_activated.position):
+    #                 current_state.board.pmax.number_of_protections -= 1
+    #             if not current_state.board.is_player_safe(Game.PMIN, bomb_activated.position):
+    #                 current_state.board.pmin.number_of_protections -= 1
+    #
+    #             current_state.board.table[bomb_activated.position[0]][bomb_activated.position[1]] = ' '
+    #             current_state.board.bombs.remove(bomb_activated)
+    #             bomb_activated.owner.bomb_dropped = None
+    #
+    #     if current_state.current_player.player_name == current_board.pmin.player_name:
+    #         print("                 Protections: " + str(current_state.current_player.number_of_protections) + "\n" +
+    #               "Current board:   Oponent Protections:" + str(current_state.opposite_player().number_of_protections))
+    #         print(str(current_state.board))
+    #         valid_answer = False
+    #         bomb = None
+    #         new_position = None
+    #         while not valid_answer:
+    #             print("If you want to exit, enter 'q'")
+    #             bomb = input("Do you want to attack? (y/n): ").lower()
+    #
+    #             if bomb not in ['y', 'n']:
+    #                 if bomb == 'q':
+    #                     return 0
+    #                 print("Answer must be y or n!")
+    #                 continue
+    #             direction = input("direction: ").lower()
+    #
+    #             if direction == 'w':
+    #                 increment_location = (-1, 0)
+    #             elif direction == "s":
+    #                 increment_location = (1, 0)
+    #             elif direction == "a":
+    #                 increment_location = (0, -1)
+    #             elif direction == "d":
+    #                 increment_location = (0, 1)
+    #             else:
+    #                 print("Answer must be w, a, s or d!")
+    #                 continue
+    #
+    #             new_position = add_positions(current_state.current_player.position, increment_location)
+    #             if current_state.board.table[new_position[0]][new_position[1]] in [' ', 'p']:
+    #                 valid_answer = True
+    #             else:
+    #                 print("Can't go there!" + str(current_state.board.table[new_position[0]][new_position[1]]))
+    #
+    #         if bomb == 'y':
+    #             current_state.board, current_state.current_player = \
+    #                 current_state.board.player_attacks(current_state.current_player.player_name, new_position[0],
+    #                                                    new_position[1])
+    #         else:
+    #             current_state.board, current_state.current_player = \
+    #                 current_state.board.player_moves(current_state.current_player.player_name, new_position[0],
+    #                                                  new_position[1])
 
 
 

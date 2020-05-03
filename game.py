@@ -1,4 +1,5 @@
 from copy import deepcopy
+from json.encoder import INFINITY
 from random import randint
 from bomb import Bomb
 
@@ -11,6 +12,11 @@ def add_positions(p1, p2):
 def manhattan(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
+def same_line(position1, position2):
+    if position1[0] == position2[0] or position1[1] == position2[1]:
+        return True
+    return False
+
 
 class Game:
     ROWS = 11
@@ -22,11 +28,21 @@ class Game:
     PROTECTION = 'p'
     BOMB = 'b'
 
+    def find_protections(self):
+        positions = []
+
+        for i,line in enumerate(self.table):
+            for j, character in enumerate(line):
+                if character == 'p':
+                    positions.append((i, j))
+        return positions
+
     def __init__(self, table, bombs, pmin, pmax):
         self.table = table
         self.bombs = bombs  # array of bombs
         self.pmin = pmin
         self.pmax = pmax
+        self.protections_positions = self.find_protections()
 
     def get_player_by_name(self, name):
         if name == self.pmin.player_name:
@@ -51,29 +67,28 @@ class Game:
         is_safe_y = False
 
         if player_position[0] == bomb_position[0]:
-            for orizontal_index in range(player_position[1], bomb_position[1]):
-                if self.table[player_position[0]][orizontal_index] == '#':
+            start = bomb_position[1] if bomb_position[1] < player_position[1] \
+                else player_position[1]
+            finish = player_position[1] if start == bomb_position[1] \
+                else bomb_position[1]
+
+            for j in range(start + 1, finish):
+                if self.table[player_position[0]][j] == '#':
                     is_safe_x = True
-                    break
-            for orizontal_index in range(bomb_position[1], player_position[1]):
-                if self.table[player_position[0]][orizontal_index] == '#':
-                    is_safe_x = True
-                    break
         else:
             is_safe_x = True
-
         if player_position[1] == bomb_position[1]:
-            for vertical_index in range(player_position[0], bomb_position[0]):
-                if self.table[vertical_index][player_position[1]] == '#':
-                    is_safe_y = True
-                    break
+            start = bomb_position[0] if bomb_position[0] < player_position[0] \
+                else player_position[0]
+            finish = player_position[0] if start == bomb_position[0] \
+                else bomb_position[0]
 
-            for vertical_index in range(bomb_position[0], player_position[0]):
-                if self.table[vertical_index][player_position[1]] == '#':
+            for i in range(start + 1, finish):
+                if self.table[i][player_position[1]] == '#':
                     is_safe_y = True
-                    break
         else:
             is_safe_y = True
+
         if is_safe_y and is_safe_x:
             return True
         return False
@@ -94,13 +109,6 @@ class Game:
             The game can end if a player blocks itself with a bomb
 
         """
-        if self.pmin.number_of_protections < 0 and self.pmax.number_of_protections < 0:
-            return "remiza"
-
-        if self.pmin.number_of_protections < 0:
-            return Game.PMAX
-        if self.pmax.number_of_protections < 0:
-            return Game.PMIN
 
         for bomb in self.bombs:
             if bomb.activated:
@@ -111,7 +119,7 @@ class Game:
                     if self.pmin.number_of_protections < 0:
                         pmin_dies = True
 
-                if not self.is_player_safe(self.pmin.player_name, bomb.position):
+                if not self.is_player_safe(self.pmax.player_name, bomb.position):
                     self.pmax.number_of_protections -= 1
                     if self.pmax.number_of_protections < 0:
                         pmax_dies = True
@@ -156,10 +164,19 @@ class Game:
         player.position = (new_pos_x, new_pos_y)
 
     def player_attacks(self, player, new_pos_x, new_pos_y):
+        """
+        function which returns a game object that would be create if
+        player attacks and then moves
+        :param player:
+        :param new_pos_x:
+        :param new_pos_y:
+        :return:
+        """
+
         game_copy_attacks = deepcopy(self)
         player_copy = game_copy_attacks.get_player_by_name(player)
 
-        if player_copy.bomb_dropped is None or player_copy.bomb_dropped.activated:
+        if player_copy.bomb_dropped is None:
             # player drops a bomb
             game_copy_attacks.table[player_copy.position[0]][player_copy.position[1]] = 'b'
             new_bomb = Bomb(position=player_copy.position, owner=player_copy)
@@ -226,47 +243,36 @@ class Game:
 
         return moves_list
 
-    def sanse_castig(self, player_name):
-        score = 0
+    def heuristic(self, player_name):
         player = self.get_player_by_name(player_name)
         oposite_player = self.pmin if player_name == self.PMAX else self.pmax
+
+        # if player.bomb_dropped:
+        #     return manhattan(player.bomb_dropped.position, oposite_player.position)
+        # else:
+        #     return -manhattan(player.position, oposite_player.position)
+
         for bomb in self.bombs:
             if bomb.owner == oposite_player:
 
                 if not self.is_player_safe(player, bomb.position):
-                    score -= 2
-                    # print("i am not safe")
-
-                elif self.player_near_danger(player, bomb.position):
-                    score -= 2
-                    # print("i am in danger")
+                    return -manhattan(player.position, bomb.position)
+                else:
+                    return manhattan(player.position, oposite_player.position)
 
             if bomb.owner == player:
-                if bomb.activated and not self.is_player_safe(oposite_player, bomb.position):
-                    score += 5
-                    # print("PLAYER NOT SAFE")
-
-                if not bomb.activated:
-                    if self.player_near_danger(oposite_player, bomb.position):
-                        score += 2
-                        # print("Oposite IN DANGER")
-                    elif not self.is_player_safe(oposite_player, bomb.position):
-                        score += 2
-                        # print("oposite is not safe")
-
+                if not self.is_player_safe(oposite_player.position, bomb.position):
+                    return manhattan(oposite_player.position, bomb.position)
                 else:
-                    score -= 5
-            if bomb.owner == player and not bomb.activated:
-                score += 5
-        # score += manhattan(player.position, oposite_player.position)
-        score += 10 * player.number_of_protections
-        score -= manhattan(player.position, oposite_player.position)
+                    return -manhattan(oposite_player.position, bomb.position)
 
-        if score == 0:
-            score = randint(1, 5)
-            # print("IS RANDOM")
+        players_distance = manhattan(player.position, oposite_player.position)
 
-        return score
+        first_protection = INFINITY
+        for protection_pos in self.protections_positions:
+            first_protection = min(manhattan(player.position, protection_pos), first_protection)
+
+        return first_protection * 0.5 + players_distance * 0.5
 
     def estimate_score(self, depth):
         t_game_over = self.game_over()
@@ -277,7 +283,7 @@ class Game:
         elif t_game_over == "remiza":
             score = 0
         else:
-            score = self.sanse_castig(Game.PMAX) - self.sanse_castig(Game.PMIN)
+            score = self.heuristic(Game.PMAX) - self.heuristic(Game.PMIN)
         return score
 
     def __str__(self):

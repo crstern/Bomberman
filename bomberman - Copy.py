@@ -190,6 +190,11 @@ def main():
     current_state = State(current_board, current_board.pmax.player_name, State.MAXIMUM_DEPTH)
 
     while True:
+        for bomb_activated in current_state.board.bombs:
+            if bomb_activated.activated:
+                current_state.board.table[bomb_activated.position[0]][bomb_activated.position[1]] = ' '
+                current_state.board.bombs.remove(bomb_activated)
+                bomb_activated.owner.bomb_dropped = None
         t_before = int(round(time.time() * 1000))
 
         if current_state.current_player.player_name == current_board.pmin.player_name:
@@ -246,7 +251,7 @@ def main():
         else:
             # JMAX moves
             t_before = int(round(time.time() * 1000))
-            if algorithm_type == 1:
+            if algorithm_type == '1':
                 updated_state = min_max(current_state)
             else:
                 updated_state = alpha_beta(-5000, 5000, current_state)
