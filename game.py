@@ -1,5 +1,4 @@
 from copy import deepcopy
-from json.encoder import INFINITY
 from random import randint
 from bomb import Bomb
 
@@ -50,18 +49,7 @@ class Game:
         else:
             return self.pmax
 
-    def is_player_safe(self, player_name, bomb_position):
-        """
-        function which returns True if a player is safe
-        after a bomb (that is on the same line or the same
-        column as the player_name) exploded
-        :param bomb_position:
-        :param player_name:
-        :return boolean:
-        """
-        player_position = self.get_player_by_name(player_name).position
-        # we verify in every direction if the first thing next to player
-        # is bomb or wall.
+    def is_safe_spot(self, player_position, bomb_position):
 
         is_safe_x = False
         is_safe_y = False
@@ -92,6 +80,23 @@ class Game:
         if is_safe_y and is_safe_x:
             return True
         return False
+
+
+    def is_player_safe(self, player_name, bomb_position):
+        """
+        function which returns True if a player is safe
+        after a bomb (that is on the same line or the same
+        column as the player_name) exploded
+        :param bomb_position:
+        :param player_name:
+        :return boolean:
+        """
+        player_position = self.get_player_by_name(player_name).position
+        # we verify in every direction if the first thing next to player
+        # is bomb or wall.
+        return self.is_safe_spot(player_position, bomb_position)
+
+
 
     def player_near_danger(self, player, bomb_position):
         neighbourhood = [[-1, 0], [1, 0], [0, -1], [0, 1]]
@@ -247,39 +252,28 @@ class Game:
         player = self.get_player_by_name(player_name)
         oposite_player = self.pmin if player_name == self.PMAX else self.pmax
 
-        # if player.bomb_dropped:
-        #     return manhattan(player.bomb_dropped.position, oposite_player.position)
-        # else:
-        #     return -manhattan(player.position, oposite_player.position)
+        safe_moves = 0
+        possible_moves = 0
+        moves = [(0, 1), (0, 0), (1, 0), (1, 1)]
 
-        for bomb in self.bombs:
-            if bomb.owner == oposite_player:
+        for i, j in moves:
+            new_pos = [player.position[0] + i, player.position[1] + j]
+            if self.table[new_pos[0]][new_pos[1]] in [' ', 'p']:
+                possible_moves += 1
+                for bomb in self.bombs:
+                    if self.is_safe_spot(new_pos, bomb.position):
+                        safe_moves+=1
 
-                if not self.is_player_safe(player, bomb.position):
-                    return -manhattan(player.position, bomb.position)
-                else:
-                    return manhattan(player.position, oposite_player.position)
-
-            if bomb.owner == player:
-                if not self.is_player_safe(oposite_player.position, bomb.position):
-                    return manhattan(oposite_player.position, bomb.position)
-                else:
-                    return -manhattan(oposite_player.position, bomb.position)
-
-        players_distance = manhattan(player.position, oposite_player.position)
-
-        first_protection = INFINITY
-        for protection_pos in self.protections_positions:
-            first_protection = min(manhattan(player.position, protection_pos), first_protection)
-
-        return first_protection * 0.5 + players_distance * 0.5
+        if possible_moves != 0:
+            return safe_moves/possible_moves * 100
+        return 0
 
     def estimate_score(self, depth):
         t_game_over = self.game_over()
         if t_game_over == Game.PMIN:
-            score = -999 - depth
+            score = -9909 - depth
         elif t_game_over == Game.PMAX:
-            score = 999 + depth
+            score = 9909 + depth
         elif t_game_over == "remiza":
             score = 0
         else:
