@@ -38,25 +38,25 @@ def draw_game(display, config):
     font = pygame.font.Font('freesansbold.ttf', 50)
     text = font.render(str(config.pmin.number_of_protections), False, white)
 
-    explosion_img = pygame.image.load('B:\\Desk\\facultate-sem-2\\IA\\Bomberman\\explosion.png')
+    explosion_img = pygame.image.load('assets/explosion.png')
     explosion_img = pygame.transform.scale(explosion_img, (w_gr, h_gr))
 
-    player1_img = pygame.image.load('B:\\Desk\\facultate-sem-2\\IA\\Bomberman\\player1.png')
+    player1_img = pygame.image.load('assets/player1.png')
     player1_img = pygame.transform.scale(player1_img, (w_gr, h_gr))
 
-    player2_img = pygame.image.load('B:\\Desk\\facultate-sem-2\\IA\\Bomberman\\player2.png')
+    player2_img = pygame.image.load('assets/player2.png')
     player2_img = pygame.transform.scale(player2_img, (w_gr, h_gr))
 
-    wall_img = pygame.image.load('B:\\Desk\\facultate-sem-2\\IA\\Bomberman\\wall.png')
+    wall_img = pygame.image.load('assets/wall.png')
     wall_img = pygame.transform.scale(wall_img, (w_gr, h_gr))
 
-    space_img = pygame.image.load('B:\\Desk\\facultate-sem-2\\IA\\Bomberman\\space.png')
+    space_img = pygame.image.load('assets/space.png')
     space_img = pygame.transform.scale(space_img, (w_gr, h_gr))
 
-    bomb_img = pygame.image.load('B:\\Desk\\facultate-sem-2\\IA\\Bomberman\\bomb.png')
+    bomb_img = pygame.image.load('assets/bomb.png')
     bomb_img = pygame.transform.scale(bomb_img, (w_gr, h_gr))
 
-    protection_img = pygame.image.load('B:\\Desk\\facultate-sem-2\\IA\\Bomberman\\protection.png')
+    protection_img = pygame.image.load('assets/protection.png')
     protection_img = pygame.transform.scale(protection_img, (w_gr, h_gr))
 
     drt = []
@@ -185,52 +185,49 @@ def print_if_final(current_state):
 
 def main():
     # initialing
-    valid_answer = False
-    while not valid_answer:
-        algorithm_type = input("Enter the algorithm type (Answer with 1 or 2)\n 1.MiniMax\n 2.Alpha-Beta\n")
-        if algorithm_type in ['1', '2']:
-            valid_answer = True
-        else:
-            print("Answer with 1 or 2!")
-
-    # initialing MAXIMUM_DEPTH
-    valid_answer = False
-    while not valid_answer:
-        n = input("Maximum depth of the tree: ")
-        if n.isdigit():
-            State.MAXIMUM_DEPTH = int(n)
-            valid_answer = True
-        else:
-            print("You must introduce a natural number greater than 0!")
-
+    # valid_answer = False
+    # while not valid_answer:
+    #     algorithm_type = input("Enter the algorithm type (Answer with 1 or 2)\n 1.MiniMax\n 2.Alpha-Beta\n")
+    #     if algorithm_type in ['1', '2']:
+    #         valid_answer = True
+    #     else:
+    #         print("Answer with 1 or 2!")
+    #
+    # # initialing MAXIMUM_DEPTH
+    # valid_answer = False
+    # while not valid_answer:
+    #     n = input("Maximum depth of the tree: ")
+    #     if n.isdigit():
+    #         State.MAXIMUM_DEPTH = int(n)
+    #         valid_answer = True
+    #     else:
+    #         print("You must introduce a natural number greater than 0!")
+    algorithm_type = '1'
+    State.MAXIMUM_DEPTH = 3
     # initialing players
     Game.PMIN = '1'
     Game.PMAX = '2'
+    bomb = 'n'
 
     current_board = Game(default_table, [], Player((1, 1), Game.PMIN), Player((6, 11), Game.PMAX))
 
     pygame.init()
     pygame.display.set_caption("Bomberman")
     screen = pygame.display.set_mode((1500, 800))
+    clock = pygame.time.Clock()
 
-    # print("Initial Table")
-    # print(str(current_board))
+
+
 
     current_state = State(current_board, current_board.pmax.player_name, State.MAXIMUM_DEPTH)
+    draw_game(screen, current_state.board)
 
-    font = pygame.font.Font('freesansbold.ttf', 50)
-    text = font.render(str(current_state.board.pmin), True, green, blue)
-    text_rect = text.get_rect()
-    text_rect.center = (400, 200)
-    squares = draw_game(screen, current_state.board)
-
-    bomb = 'n'
 
     while True:
         t_before = int(round(time.time() * 1000))
         for bomb_activated in current_state.board.bombs:
             if bomb_activated.activated:
-                current_state.board.table[bomb_activated.position[0]][bomb_activated.position[1]] = ' '
+                current_state.board.table[bomb_activated.position[0]][bomb_activated.position[1]] = 'a'
                 current_state.board.bombs.remove(bomb_activated)
                 bomb_activated.owner.bomb_dropped = None
         if current_state.current_player.player_name == current_board.pmin.player_name:
